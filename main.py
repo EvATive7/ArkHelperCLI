@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     try:
         entrance = locals()[mode]
-        if var.verbose:
+        if var.verbose and False:
             run_with_LineProfiler(entrance)
         else:
             entrance()

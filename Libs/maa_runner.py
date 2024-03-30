@@ -203,7 +203,7 @@ def get_full_task(config: dict):
                             case_eval = eval(case, {}, aval_expression())
                             if type(case_eval) != bool:
                                 raise Exception()
-                            if case:
+                            if case_eval:
                                 return case_config
                             else:
                                 continue
