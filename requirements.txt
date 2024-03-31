@@ -6,3 +6,4 @@ colorlog
 line_profiler
 indent-concluder
 fake-useragent
+tqdm
