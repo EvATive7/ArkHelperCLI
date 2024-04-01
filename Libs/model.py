@@ -22,15 +22,15 @@ class ADB:
     def __init__(self, device: str = None) -> None:
         self.device = device
 
-    def exec_adb_cmd(self, cmd: T) -> T:
+    def exec_adb_cmd(self, cmd: T, each_timeout=None) -> T:
         type_of_cmd = type(cmd)
 
         if type_of_cmd == str:
-            return self._exec_adb_cmd(cmd)
+            return self._exec_adb_cmd(cmd, each_timeout)
         if type_of_cmd == list:
-            return [self._exec_adb_cmd(c) for c in cmd]
+            return [self._exec_adb_cmd(c, each_timeout) for c in cmd]
 
-    def _exec_adb_cmd(self, cmd):
+    def _exec_adb_cmd(self, cmd, timeout):
         device = self.device
         final_cmd = var.global_config['adb_path']
         if device:
@@ -44,7 +44,7 @@ class ADB:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True)
-        outinfo, errinfo = proc.communicate()
+        outinfo, errinfo = proc.communicate(timeout=timeout)
         try:
             outinfo = outinfo.decode('utf-8')
         except:
@@ -60,7 +60,7 @@ class ADB:
 
     def get_game_version(self, game_type):
         package_name = arknights_package_name[game_type]
-        result = self.exec_adb_cmd(f'shell "pm dump {package_name} | grep versionName"')
+        result = self.exec_adb_cmd(f'shell "pm dump {package_name} | grep versionName"', each_timeout=5)
 
         return result.replace(' ', '').replace('versionName=', '').replace('\r\n', '')
 
