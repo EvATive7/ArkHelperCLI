@@ -462,30 +462,35 @@ def update_nav():
     pass
 
 
-def try_run(func: Callable, args: tuple, max_try_time=5, timeout=10, logger=logging.root):
+def try_run(func: Callable, args: tuple, max_try_time=5, timeout=10, logger=None):
     func_with_arg_str = f"{func.__name__}{str(args)}"
+
+    if not logger:
+        logger = logging.getLogger(func_with_arg_str)
 
     class ThreadWithException(threading.Thread):
         def __init__(self, name):
             threading.Thread.__init__(self)
             self.name = name
+            self.result = None
 
         def run(self):
             # target function of the thread class
             try:  # 用try/finally 的方式处理exception，从而kill thread
                 func(*args)
-            finally:
-                pass
+            except Exception as e:
+                logger.warning(f"Exception: {e}")
+                self.result = e
+                self.stop()
 
         def get_id(self):
-            # returns id of the respective thread
             if hasattr(self, '_thread_id'):
                 return self._thread_id
             for id, thread in threading._active.items():
                 if thread is self:
                     return id
 
-        def stop_byexcept(self):
+        def stop(self):
             thread_id = self.get_id()
             res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
                                                              ctypes.py_object(SystemExit))
@@ -493,20 +498,21 @@ def try_run(func: Callable, args: tuple, max_try_time=5, timeout=10, logger=logg
                 ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
 
     for try_time in range(max_try_time):
-        logger.debug(f'{func_with_arg_str} {try_time+1}st/{max_try_time}max trying')
-        thread = ThreadWithException('thread0')
+        logger.debug(f'{try_time+1}st/{max_try_time}max trying')
+        thread = ThreadWithException(func_with_arg_str)
         thread.start()
         thread.join(timeout)
-        if thread.is_alive():
-            logger.warning(f'{func_with_arg_str} {try_time+1}st/{max_try_time}max failed')
-            thread.stop_byexcept()
+        if not thread.is_alive() and not type(thread.result) == Exception:
+            return True
+        else:
+            logger.warning(f'{try_time+1}st/{max_try_time}max failed')
+            thread.stop()
             thread.join(timeout)
+            result = thread.result
             del thread
             continue
-        else:
-            return True
 
-    return False
+    return False, result
 
 
 def download(url, path):
