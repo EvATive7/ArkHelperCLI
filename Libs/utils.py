@@ -502,13 +502,13 @@ def try_run(func: Callable, args: tuple, max_try_time=5, timeout=10, logger=None
         thread = ThreadWithException(func_with_arg_str)
         thread.start()
         thread.join(timeout)
+        result = thread.result
         if not thread.is_alive() and not type(thread.result) == Exception:
-            return True
+            return True, result
         else:
             logger.warning(f'{try_time+1}st/{max_try_time}max failed')
             thread.stop()
             thread.join(timeout)
-            result = thread.result
             del thread
             continue
 
