@@ -373,7 +373,7 @@ def adjust_log_file():
     log_file = var.log_path / 'log.log'
     log_backup_file = var.log_path / 'log.log.bak'
     if log_file.exists():
-        if byte_to_MB(log_file.stat().st_size) > 20:
+        if byte_to_MB(log_file.stat().st_size) > var.global_config.get('max_config_size', 5):
             if log_backup_file.exists():
                 log_backup_file.unlink()
             log_file.rename(log_backup_file)
