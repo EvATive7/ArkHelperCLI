@@ -105,7 +105,8 @@ def run():
 
                     def no_task():
                         logger.debug(f'No task to distribute. Ended')
-                        status.device.kill()
+                        if status.device.kill_after_end:
+                            status.device.kill()
                         status.finished = True
                     if var.tasks:
                         distribute_task = (
