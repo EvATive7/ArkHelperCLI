@@ -1,4 +1,5 @@
-adb_path: C:\App\platform-tools\adb.exe # both absolute and relative is ok for a path
+adb_path: C:\App\platform-tools\adb.exe # both absolute and relative is ok for a path.
+                                        # you can just leave "adb" if it's already in the %PATH%.
 maa_path: C:\App\MAA
 restart_adb: false # optional
 max_task_waiting_time: 3600 # second, optional
