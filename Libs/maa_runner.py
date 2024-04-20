@@ -36,7 +36,7 @@ def do_conclusion():
 
 
 def get_report(result):
-    conclusion_item = []
+    final_conclusion = ConcluderItem('ArkHelperCLI Running')
     for task_id, task_result in result.items():
         if task_result:
             item = ConcluderItem(task_id, task_result['exec_result']['succeed'], '')
@@ -44,14 +44,9 @@ def get_report(result):
                 item.append(ConcluderItem(maatask['type'], maatask['exec_result']['succeed'], ', '.join(maatask['exec_result']['reason'])))
         else:
             item = ConcluderItem(task_id, False, 'Task failed to run')
-        conclusion_item.append(item)
-    conclusion_item = '\n'.join([str(i) for i in conclusion_item])
+        final_conclusion.append(item)
 
-    return \
-        f"""ArkHelperCLI has finished all of the tasks
-{var.start_time.strftime('%Y-%m-%d %H:%M:%S')} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-{conclusion_item}"""
+    return final_conclusion
 
 
 def run():
@@ -141,7 +136,15 @@ def run():
         else:
             time.sleep(2)
 
-    web_hook('run-finished', report=get_report(running_result))
+    report = get_report(running_result)
+    succeed = report.succeed
+    report = \
+        f"""{report}
+
+{var.start_time.strftime('%Y-%m-%d %H:%M:%S')} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
+    if not succeed:
+        web_hook('run-failed', report=report)
+    web_hook('run-finished', report=report)
 
 
 def get_full_task(config: dict):
