@@ -75,6 +75,7 @@ class Device:
         self._path = dev_config['start_path']
         self._host = dev_config['emulator_address'].split(':')[0]
         self._port = dev_config['emulator_address'].split(':')[-1]
+        self.kill_after_end = dev_config.get('kill_after_end', True)
         self._process = dev_config.get('process')
         self.logger = logging.getLogger(str(self))
         self.current_status = multiprocessing.Manager().dict()

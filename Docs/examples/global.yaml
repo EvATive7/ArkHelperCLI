@@ -1,4 +1,5 @@
-adb_path: C:\App\platform-tools\adb.exe # both absolute and relative is ok for a path
+adb_path: C:\App\platform-tools\adb.exe # both absolute and relative is ok for a path.
+                                        # you can just leave "adb" if it's already in the %PATH%.
 maa_path: C:\App\MAA
 restart_adb: false # optional
 max_task_waiting_time: 3600 # second, optional
@@ -19,10 +20,10 @@ task-device: # Use unique identifier(rules in personal.yaml) to match the device
   YoStarEN: mumu
 webhook:  # optional
           # built-in variable is available for body, header and url. Including:
-          # #{event} : str, which triggers webhook, value in ['run-finished']
-          # #{report} : str, report text after the end of run, available on run-finished
-  - on: run-finished # optional. Default is "all"
-    # on: ['run-finished'] # A string or a list is ok.
+          # #{event} : str, which triggers webhook, value in ['run-finished', 'run-failed']
+          # #{report} : str, report text after the end of run, available on run-finished, run-failed
+  - 'on': run-failed # optional. Default is "all"
+    # 'on': ['run-finished', 'run-failed'] # A string or a list is ok.
     url: http://your.url:1234/send_private_msg
     body: # If it is not filled in, the method is GET otherwise POST
     >
@@ -35,6 +36,6 @@ webhook:  # optional
               }
           }
       }
-    headers: # optional, X-ArkHelper-Event: #{event} is added to it by default
+    headers: # optional, `X-ArkHelper-Event: #{event}` is always added to it
       Authorization: "Bearer 123456789987654321"
       Content-Type: 'application/json'
