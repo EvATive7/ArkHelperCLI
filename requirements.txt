@@ -4,6 +4,7 @@ pytz
 requests
 colorlog
 line_profiler
-indent-concluder
+indent-concluder>=1.1.3
 fake-useragent
 tqdm
+easywebhooker

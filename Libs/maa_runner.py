@@ -9,6 +9,7 @@ import logging
 import time
 import copy
 import multiprocessing
+import easywebhooker
 from dataclasses import dataclass
 
 from indent_concluder import Item as ConcluderItem
@@ -138,13 +139,15 @@ def run():
 
     report = get_report(running_result)
     succeed = report.succeed
+    report = '\n'.join([_r.failed_markdown() for _r in report.children])
     report = \
         f"""{report}
 
 {var.start_time.strftime('%Y-%m-%d %H:%M:%S')} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
+    easywebhooker.configure(var.global_config.get('webhook', []))
     if not succeed:
-        web_hook('run-failed', report=report)
-    web_hook('run-finished', report=report)
+        easywebhooker.webhook('run-failed', report=report)
+    easywebhooker.webhook('run-finished', report=report)
 
 
 def get_full_task(config: dict):

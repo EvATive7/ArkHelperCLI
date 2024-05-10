@@ -18,24 +18,16 @@ devices_running_limit: 1 # The maximum number of devices running at the same tim
 task-device: # Use unique identifier(rules in personal.yaml) to match the device corresponding to the task, optional
   Official4567: mumu
   YoStarEN: mumu
-webhook:  # optional
-          # built-in variable is available for body, header and url. Including:
-          # #{event} : str, which triggers webhook, value in ['run-finished', 'run-failed']
-          # #{report} : str, report text after the end of run, available on run-finished, run-failed
-  - 'on': run-failed # optional. Default is "all"
-    # 'on': ['run-finished', 'run-failed'] # A string or a list is ok.
-    url: http://your.url:1234/send_private_msg
-    body: # If it is not filled in, the method is GET otherwise POST
-    >
+webhook:  
+# optional, see HookConfig in https://github.com/EvATive7/easywebhooker/blob/main/easywebhooker/__init__.py
+# built-in variable is available for body and url. Including:
+# #{event} : str, which triggers webhook, value in ['run-finished', 'run-failed']
+# #{report} : str, report text after the end of run, available when run-finished, run-failed
+  - when: 'finished'
+    method: POST
+    url: http://127.0.0.1:9888/webhook/f6aca3f7dc074d8c882184c71be3899d
+    body: >
       {
-          "user_id": 123456789,
-          "message": {
-              "type": "text",
-              "data": {
-                  "text": "#{report}"
-              }
-          }
+        'me': 'ArkHelper',
+        'content': report
       }
-    headers: # optional, `X-ArkHelper-Event: #{event}` is always added to it
-      Authorization: "Bearer 123456789987654321"
-      Content-Type: 'application/json'
