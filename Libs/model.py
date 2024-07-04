@@ -148,7 +148,10 @@ class AsstProxy:
         self.status['max_sanity'] = 0
 
         self.userdir: pathlib.Path = var.maa_usrdir_path / convert_str_to_legal_filename_windows(self._proxy_id)
-        self.asst = Asst(var.maa_env, self.userdir, asst_callback)
+        self.userdir.mkdir(exist_ok=True)
+
+        try_run(Asst.load, (var.maa_env, ), 2, 5, self._logger)
+        self.asst = Asst(asst_callback)
 
     def load_res(self, client_type: Optional[Union[str, None]] = None):
         incr: pathlib.Path
@@ -158,7 +161,7 @@ class AsstProxy:
             incr = var.maa_env / 'resource' / 'global' / str(client_type)
 
         self._logger.debug(f'Start to load asst resource and lib from incremental path {incr}')
-        if not try_run(Asst.load_res, (self.asst, incr,), 2, 5, self._logger)[0]:
+        if not try_run(Asst.load, (var.maa_env, incr, self.userdir), 2, 5, self._logger)[0]:
             raise Exception('Asst failed to load resource')
         self._logger.debug(f'Asst resource and lib loaded from incremental path {incr}')
 

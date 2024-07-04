@@ -1,7 +1,6 @@
 import ctypes
 import ctypes.util
 import json
-import multiprocessing
 import os
 import pathlib
 import platform
@@ -22,20 +21,18 @@ class Asst:
         ``param3 arg``:     自定义参数
     '''
 
-    def load_res(self, incremental_path: Optional[Union[pathlib.Path, str]] = None) -> bool:
+    @staticmethod
+    def load(path: Union[pathlib.Path, str], incremental_path: Optional[Union[pathlib.Path, str]] = None,
+             user_dir: Optional[Union[pathlib.Path, str]] = None) -> bool:
         '''
-        加载资源
+        加载 dll 及资源
 
         :params:
+            ``path``:    DLL及资源所在文件夹路径
             ``incremental_path``:   增量资源所在文件夹路径
+            ``user_dir``:   用户数据（日志、调试图片等）写入文件夹路径
         '''
 
-        self.__lib.AsstLoadResource(str(self.path).encode('utf-8'))
-        if incremental_path:
-            self.__lib.AsstLoadResource(
-                str(incremental_path).encode('utf-8'))
-
-    def __load_lib(self):
         platform_values = {
             'windows': {
                 'libpath': 'MaaCore.dll',
@@ -58,45 +55,45 @@ class Asst:
         else:
             lib_import_func = ctypes.CDLL
 
-        self.__libpath = pathlib.Path(self.path) / platform_values[platform_type]['libpath']
+        Asst.__libpath = pathlib.Path(path) / platform_values[platform_type]['libpath']
         try:
-            os.environ[platform_values[platform_type]['environ_var']] += os.pathsep + str(self.path)
+            os.environ[platform_values[platform_type]['environ_var']] += os.pathsep + str(path)
         except KeyError:
-            os.environ[platform_values[platform_type]['environ_var']] = os.pathsep + str(self.path)
+            os.environ[platform_values[platform_type]['environ_var']] = os.pathsep + str(path)
 
         try:
-            self.__lib = lib_import_func(str(self.__libpath))
+            Asst.__lib = lib_import_func(str(Asst.__libpath))
         except OSError:
-            self.__libpath = ctypes.util.find_library('MaaCore')
-            self.__lib = lib_import_func(str(self.__libpath))
+            Asst.__libpath = ctypes.util.find_library('MaaCore')
+            Asst.__lib = lib_import_func(str(Asst.__libpath))
 
-        self.__set_lib_properties()
+        Asst.__set_lib_properties()
 
-        if self.user_dir:
-            self.__lib.AsstSetUserDir(str(self.user_dir).encode('utf-8'))
-        pass
+        ret: bool = True
+        if user_dir:
+            ret &= Asst.__lib.AsstSetUserDir(str(user_dir).encode('utf-8'))
 
-    def __init__(self, path: Union[pathlib.Path, str], user_dir: Optional[Union[pathlib.Path, str]] = None, callback: CallBackType = None, arg=None):
+        ret &= Asst.__lib.AsstLoadResource(str(path).encode('utf-8'))
+        if incremental_path:
+            ret &= Asst.__lib.AsstLoadResource(
+                str(incremental_path).encode('utf-8'))
+
+        return ret
+
+    def __init__(self, callback: CallBackType = None, arg=None):
         '''
         :params:
-            ``path``:    DLL及资源所在文件夹路径
-            ``user_dir``:   用户数据（日志、调试图片等）写入文件夹路径
             ``callback``:   回调函数
             ``arg``:        自定义参数
         '''
-        user_dir.mkdir(exist_ok=True)
-        self.path = path
-        self.user_dir = user_dir
-        self.__load_lib()
-        self.load_res(self.path)
-
+        self.__callback = callback
         if callback:
-            self.__ptr = self.__lib.AsstCreateEx(callback, arg)
+            self.__ptr = Asst.__lib.AsstCreateEx(callback, arg)
         else:
-            self.__ptr = self.__lib.AsstCreate()
+            self.__ptr = Asst.__lib.AsstCreate()
 
     def __del__(self):
-        self.__lib.AsstDestroy(self.__ptr)
+        Asst.__lib.AsstDestroy(self.__ptr)
         self.__ptr = None
 
     def set_instance_option(self, option_type: InstanceOptionType, option_value: str):
@@ -110,7 +107,7 @@ class Asst:
 
         :return: 是否设置成功
         '''
-        return self.__lib.AsstSetInstanceOption(self.__ptr,
+        return Asst.__lib.AsstSetInstanceOption(self.__ptr,
                                                 int(option_type), option_value.encode('utf-8'))
 
     def connect(self, adb_path: str, address: str, config: str = 'General'):
@@ -124,7 +121,7 @@ class Asst:
 
         :return: 是否连接成功
         '''
-        return self.__lib.AsstConnect(self.__ptr,
+        return Asst.__lib.AsstConnect(self.__ptr,
                                       adb_path.encode('utf-8'), address.encode('utf-8'), config.encode('utf-8'))
 
     TaskId = int
@@ -139,7 +136,7 @@ class Asst:
 
         :return: 任务 ID, 可用于 set_task_params 接口
         '''
-        return self.__lib.AsstAppendTask(self.__ptr, type_name.encode('utf-8'),
+        return Asst.__lib.AsstAppendTask(self.__ptr, type_name.encode('utf-8'),
                                          json.dumps(params, ensure_ascii=False).encode('utf-8'))
 
     def set_task_params(self, task_id: TaskId, params: JSON) -> bool:
@@ -152,7 +149,7 @@ class Asst:
 
         :return: 是否成功
         '''
-        return self.__lib.AsstSetTaskParams(self.__ptr, task_id, json.dumps(params, ensure_ascii=False).encode('utf-8'))
+        return Asst.__lib.AsstSetTaskParams(self.__ptr, task_id, json.dumps(params, ensure_ascii=False).encode('utf-8'))
 
     def start(self) -> bool:
         '''
@@ -160,7 +157,7 @@ class Asst:
 
         :return: 是否成功
         '''
-        return self.__lib.AsstStart(self.__ptr)
+        return Asst.__lib.AsstStart(self.__ptr)
 
     def stop(self) -> bool:
         '''
@@ -168,7 +165,7 @@ class Asst:
 
         :return: 是否成功
         '''
-        return self.__lib.AsstStop(self.__ptr)
+        return Asst.__lib.AsstStop(self.__ptr)
 
     def running(self) -> bool:
         '''
@@ -176,9 +173,10 @@ class Asst:
 
         :return: 是否正在运行
         '''
-        return self.__lib.AsstRunning(self.__ptr)
+        return Asst.__lib.AsstRunning(self.__ptr)
 
-    def log(self, level: str, message: str) -> None:
+    @staticmethod
+    def log(level: str, message: str) -> None:
         '''
         打印日志
 
@@ -187,7 +185,7 @@ class Asst:
             ``message``:    日志内容
         '''
 
-        self.__lib.AsstLog(level.encode('utf-8'), message.encode('utf-8'))
+        Asst.__lib.AsstLog(level.encode('utf-8'), message.encode('utf-8'))
 
     def get_version(self) -> str:
         '''
@@ -195,53 +193,54 @@ class Asst:
 
         : return: 版本号
         '''
-        return self.__lib.AsstGetVersion().decode('utf-8')
+        return Asst.__lib.AsstGetVersion().decode('utf-8')
 
-    def __set_lib_properties(self):
-        self.__lib.AsstSetUserDir.restype = ctypes.c_bool
-        self.__lib.AsstSetUserDir.argtypes = (
+    @staticmethod
+    def __set_lib_properties():
+        Asst.__lib.AsstSetUserDir.restype = ctypes.c_bool
+        Asst.__lib.AsstSetUserDir.argtypes = (
             ctypes.c_char_p,)
 
-        self.__lib.AsstLoadResource.restype = ctypes.c_bool
-        self.__lib.AsstLoadResource.argtypes = (
+        Asst.__lib.AsstLoadResource.restype = ctypes.c_bool
+        Asst.__lib.AsstLoadResource.argtypes = (
             ctypes.c_char_p,)
 
-        self.__lib.AsstCreate.restype = ctypes.c_void_p
-        self.__lib.AsstCreate.argtypes = ()
+        Asst.__lib.AsstCreate.restype = ctypes.c_void_p
+        Asst.__lib.AsstCreate.argtypes = ()
 
-        self.__lib.AsstCreateEx.restype = ctypes.c_void_p
-        self.__lib.AsstCreateEx.argtypes = (
+        Asst.__lib.AsstCreateEx.restype = ctypes.c_void_p
+        Asst.__lib.AsstCreateEx.argtypes = (
             ctypes.c_void_p, ctypes.c_void_p,)
 
-        self.__lib.AsstDestroy.argtypes = (ctypes.c_void_p,)
+        Asst.__lib.AsstDestroy.argtypes = (ctypes.c_void_p,)
 
-        self.__lib.AsstSetInstanceOption.restype = ctypes.c_bool
-        self.__lib.AsstSetInstanceOption.argtypes = (
+        Asst.__lib.AsstSetInstanceOption.restype = ctypes.c_bool
+        Asst.__lib.AsstSetInstanceOption.argtypes = (
             ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p,)
 
-        self.__lib.AsstConnect.restype = ctypes.c_bool
-        self.__lib.AsstConnect.argtypes = (
+        Asst.__lib.AsstConnect.restype = ctypes.c_bool
+        Asst.__lib.AsstConnect.argtypes = (
             ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p,)
 
-        self.__lib.AsstAppendTask.restype = ctypes.c_int
-        self.__lib.AsstAppendTask.argtypes = (
+        Asst.__lib.AsstAppendTask.restype = ctypes.c_int
+        Asst.__lib.AsstAppendTask.argtypes = (
             ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p)
 
-        self.__lib.AsstSetTaskParams.restype = ctypes.c_bool
-        self.__lib.AsstSetTaskParams.argtypes = (
+        Asst.__lib.AsstSetTaskParams.restype = ctypes.c_bool
+        Asst.__lib.AsstSetTaskParams.argtypes = (
             ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p)
 
-        self.__lib.AsstStart.restype = ctypes.c_bool
-        self.__lib.AsstStart.argtypes = (ctypes.c_void_p,)
+        Asst.__lib.AsstStart.restype = ctypes.c_bool
+        Asst.__lib.AsstStart.argtypes = (ctypes.c_void_p,)
 
-        self.__lib.AsstStop.restype = ctypes.c_bool
-        self.__lib.AsstStop.argtypes = (ctypes.c_void_p,)
+        Asst.__lib.AsstStop.restype = ctypes.c_bool
+        Asst.__lib.AsstStop.argtypes = (ctypes.c_void_p,)
 
-        self.__lib.AsstRunning.restype = ctypes.c_bool
-        self.__lib.AsstRunning.argtypes = (ctypes.c_void_p,)
+        Asst.__lib.AsstRunning.restype = ctypes.c_bool
+        Asst.__lib.AsstRunning.argtypes = (ctypes.c_void_p,)
 
-        self.__lib.AsstGetVersion.restype = ctypes.c_char_p
+        Asst.__lib.AsstGetVersion.restype = ctypes.c_char_p
 
-        self.__lib.AsstLog.restype = None
-        self.__lib.AsstLog.argtypes = (
+        Asst.__lib.AsstLog.restype = None
+        Asst.__lib.AsstLog.argtypes = (
             ctypes.c_char_p, ctypes.c_char_p)
