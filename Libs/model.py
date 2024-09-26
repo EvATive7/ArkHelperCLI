@@ -12,7 +12,7 @@ from fake_useragent import UserAgent
 
 import var
 from Libs.MAA.asst.asst import Asst
-from Libs.MAA.asst.utils import Message
+from Libs.MAA.asst.utils import InstanceOptionType, Message, StaticOptionType
 from Libs.utils import *
 
 T = TypeVar('T', str, list[str])
@@ -71,7 +71,9 @@ class ADB:
 class Device:
     def __init__(self, dev_config) -> None:
         self._adb = var.global_config['adb_path']
+        self.extras = dev_config.get('extras')
         self.alias = dev_config['alias']
+        self.config_type = dev_config.get('config', 'General')
         self._host = dev_config['emulator_address'].split(':')[0]
         self._port = dev_config['emulator_address'].split(':')[-1]
         self.kill_after_end = dev_config.get('kill_after_end', True)
@@ -148,7 +150,12 @@ class AsstProxy:
         self.status['max_sanity'] = 0
 
         self.userdir: pathlib.Path = var.maa_usrdir_path / convert_str_to_legal_filename_windows(self._proxy_id)
-        self.asst = Asst(var.maa_env, self.userdir, asst_callback)
+        self.userdir.mkdir(exist_ok=True)
+
+        try_run(Asst.load, (var.maa_env, None, self.userdir), 2, 5, self._logger)
+        self.asst = Asst(asst_callback)
+        self.asst.set_instance_option(InstanceOptionType.touch_type, 'minitouch')
+        # Asst.set_static_option(StaticOptionType.gpu_ocr, '0')
 
     def load_res(self, client_type: Optional[Union[str, None]] = None):
         incr: pathlib.Path
@@ -158,17 +165,18 @@ class AsstProxy:
             incr = var.maa_env / 'resource' / 'global' / str(client_type)
 
         self._logger.debug(f'Start to load asst resource and lib from incremental path {incr}')
-        if not try_run(Asst.load_res, (self.asst, incr,), 2, 5, self._logger)[0]:
+        if not try_run(Asst.load, (var.maa_env, incr, self.userdir), 2, 5, self._logger)[0]:
             raise Exception('Asst failed to load resource')
         self._logger.debug(f'Asst resource and lib loaded from incremental path {incr}')
 
     def connect(self):
-
+        if self.device.extras:
+            Asst.set_connection_extras(**self.device.extras)
         max_try_time = 50
         for tried_time in range(max_try_time):
             self._logger.debug(f'Connect emulator {tried_time}st/{max_try_time}trying')
 
-            if self.asst.connect(self.device._adb, self.device.addr):
+            if self.asst.connect(self.device._adb, self.device.addr, self.device.config_type):
                 self._logger.debug(f'Connected to emulator')
                 return
             else:
