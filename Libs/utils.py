@@ -186,17 +186,12 @@ def read_config(config_name):
 
 def get_logging_handlers():
     file_level, console_level = logging.DEBUG, logging.DEBUG if var.verbose else logging.INFO
-    log_file = var.log_path / 'log.log'
+    log_file = var.log_path / f'{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.log'
     format = '%(asctime)s[%(levelname)s][%(name)s] %(message)s'
 
     if not log_file.exists():
         log_file.parent.mkdir(exist_ok=True)
         log_file.touch()
-
-    try:
-        adjust_log_file()
-    except:
-        pass
 
     file_handler = logging.FileHandler(str(log_file), encoding='utf-8')
     file_handler.setLevel(file_level)
@@ -320,16 +315,6 @@ def in_game_time(time, server='Official'):
 
 def byte_to_MB(byte):
     return byte / (1024**2)
-
-
-def adjust_log_file():
-    log_file = var.log_path / 'log.log'
-    log_backup_file = var.log_path / 'log.log.bak'
-    if log_file.exists():
-        if byte_to_MB(log_file.stat().st_size) > var.global_config.get('max_config_size', 5):
-            if log_backup_file.exists():
-                log_backup_file.unlink()
-            log_file.rename(log_backup_file)
 
 
 # stage_opening_time, where Monday == 0 ... Sunday == 6.
