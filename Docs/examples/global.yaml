@@ -19,9 +19,9 @@ task-device: # Use unique identifier(rules in personal.yaml) to match the device
 webhook:  
 # optional, see HookConfig in https://github.com/EvATive7/easywebhooker/blob/main/easywebhooker/__init__.py
 # built-in variable is available for body and url. Including:
-# #{event} : str, which triggers webhook, value in ['run-finished', 'run-failed']
-# #{report} : str, report text after the end of run, available when run-finished, run-failed
-  - when: 'finished'
+# #{event} : str, which triggers webhook, value in ['run-finished', 'run-failed', 'run-succeed']
+# #{report} : str, report text after the end of run, available when run-finished, run-failed, run-succeed
+  - when: 'run-finished'
     method: POST
     url: http://127.0.0.1:9888/webhook/f6aca3f7dc074d8c882184c71be3899d
     body: >

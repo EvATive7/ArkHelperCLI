@@ -21,12 +21,17 @@ process_str = None
 @Asst.CallBackType
 def asst_callback(msg, details, arg):
     try:
-        m = Message(msg)
-        d = json.loads(details.decode('utf-8'))
-        asstproxy.process_callback(m, d, arg)
+        try:
+            m = Message(msg)
+            d = json.loads(details.decode('utf-8'))
+            asstproxy.process_callback(m, d, arg)
+        except NameError as e:
+            if e.name == 'asstproxy':
+                logger.debug(f'asstproxy was deleted when receiving callback: {e}')
+            else:
+                raise
     except Exception as e:
         logger.error(f'An unexpected error was occured when receiving callback: {e}', exc_info=True)
-        pass
 
 
 def start_task_process(process_static_params, process_shared_status):

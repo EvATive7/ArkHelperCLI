@@ -51,7 +51,7 @@ def get_report(result):
 
 
 def run():
-    update_nav()
+    # update_nav()
     if var.global_config.get('restart_adb', False):
         ADB().exec_adb_cmd(['kill-server', 'start-server'])
     # kill_all_emulators()
@@ -147,6 +147,8 @@ def run():
     easywebhooker.configure(var.global_config.get('webhook', []))
     if not succeed:
         easywebhooker.webhook('run-failed', report=report)
+    else:
+        easywebhooker.webhook('run-succeed', report=report)
     easywebhooker.webhook('run-finished', report=report)
 
 
