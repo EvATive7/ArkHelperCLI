@@ -1,5 +1,4 @@
 title ArkHelperCLI
-call pip install -r requirements.txt
 taskkill /f /t /im maa.exe
-cls
-python main.py -v run
+call .venv\Scripts\activate.bat
+python Src\main.py -v run

@@ -1,5 +1,5 @@
 psutil
-PyYAML
+pyyaml
 pytz
 requests
 colorlog
@@ -8,3 +8,4 @@ indent-concluder>=1.1.3
 fake-useragent
 tqdm
 easywebhooker
+bs4

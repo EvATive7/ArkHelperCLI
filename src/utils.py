@@ -24,11 +24,11 @@ from line_profiler import LineProfiler  # do not remove this. It's needed by mai
 import var
 
 
-def init(main_path):
+def init():
     mode, verbose = parse_arg()
 
     var.start_time = datetime.now()
-    var.cli_env = Path(main_path, '../')
+    var.cli_env = Path()
     var.data_path = var.cli_env / 'Data'
     var.config_path = var.data_path / 'Config'
     var.log_path = var.data_path / 'Log'

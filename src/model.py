@@ -11,9 +11,9 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
 import var
-from Libs.MAA.asst.asst import Asst
-from Libs.MAA.asst.utils import InstanceOptionType, Message, StaticOptionType
-from Libs.utils import *
+from MAA.asst.asst import Asst
+from MAA.asst.utils import InstanceOptionType, Message, StaticOptionType
+from utils import *
 
 T = TypeVar('T', str, list[str])
 
@@ -140,7 +140,7 @@ class DictProxy:
 
 class AsstProxy:
 
-    def __init__(self, id, last_logger: logging.Logger, device: Device, asst_callback: Asst.CallBackType) -> None:
+    def __init__(self, id, last_logger: logging.Logger, device: Device, asst_callback: Asst.CallBackType) -> None: # type: ignore
         self._proxy_id = id
         self._logger = last_logger.getChild(str(self))
         self.device = device

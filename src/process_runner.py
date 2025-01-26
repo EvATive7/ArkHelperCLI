@@ -5,10 +5,10 @@ import logging
 import json
 from typing import Optional, Union
 
-from Libs.MAA.asst.asst import Asst
-from Libs.MAA.asst.utils import Message
-from Libs.model import *
-from Libs.utils import *
+from MAA.asst.asst import Asst
+from MAA.asst.utils import Message
+from model import *
+from utils import *
 
 
 logger: logging.Logger = None

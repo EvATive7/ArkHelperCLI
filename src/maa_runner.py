@@ -1,8 +1,8 @@
 import var
-from Libs.utils import *
-from Libs.model import *
-from Libs.process_runner import start_task_process
-from Libs.task_planner import *
+from utils import *
+from model import *
+from process_runner import start_task_process
+from task_planner import *
 
 
 import logging

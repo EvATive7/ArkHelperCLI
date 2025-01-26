@@ -1,9 +1,9 @@
 import var
-from Libs.utils import *
-from Libs.test import test
-from Libs.maa_runner import run
+from utils import *
+from test_entrance import test
+from maa_runner import run
 
-mode = init(main_path=__file__)
+mode = init()
 
 if __name__ == '__main__':
     logging.info(f'CLI started up at {var.cli_env}')

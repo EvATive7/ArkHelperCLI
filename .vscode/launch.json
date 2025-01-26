@@ -8,7 +8,8 @@
             "name": "执行一轮maa任务并关闭",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/main.py",
+            "program": "${workspaceFolder}/src/main.py",
+            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "args": [
                 "-v",
@@ -20,7 +21,8 @@
             "name": "进入test函数启动调试",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/main.py",
+            "program": "${workspaceFolder}/src/main.py",
+            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "args": [
                 "-v",
